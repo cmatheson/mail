@@ -95,7 +95,11 @@ module Mail
     # Send the message via SMTP.
     # The from and to attributes are optional. If not set, they are retrieve from the Message.
     def deliver!(mail)
-      smtp_from, smtp_to, message = check_delivery_params(mail)
+      deliver_messages!([mail]).first
+    end
+
+    def deliver_messages!(messages)
+      messages.each { |m| check_delivery_params(m) }
 
       smtp = Net::SMTP.new(settings[:address], settings[:port])
       if settings[:tls] || settings[:ssl]
@@ -108,18 +112,22 @@ module Mail
         end
       end
 
-      response = nil
+      responses = nil
       smtp.start(settings[:domain], settings[:user_name], settings[:password], settings[:authentication]) do |smtp_obj|
-        response = smtp_obj.sendmail(message, smtp_from, smtp_to)
+        responses = messages.map do |mail|
+          smtp_from, smtp_to, message = check_delivery_params(mail)
+          response = smtp_obj.sendmail(message, smtp_from, smtp_to)
+
+          if settings[:return_response]
+            response
+          else
+            self
+          end
+        end
       end
 
-      if settings[:return_response]
-        response
-      else
-        self
-      end
+      responses
     end
-    
 
     private
 

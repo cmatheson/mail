@@ -1,6 +1,19 @@
 Mail [![Build Status](https://travis-ci.org/mikel/mail.png?branch=master)](https://travis-ci.org/mikel/mail)
 ====
 
+What the fork?
+--------------
+
+The purpose of this fork is to allow re-using an SMTP connection to send many
+messages (this is useful to avoid connection throttling from some providers
+like gmail).
+
+```ruby
+mails = 50.times.map { Mail.new { ... } }
+smtp = m.delivery_method
+smtp.deliver_messages!(mails)
+```
+
 Introduction
 ------------
 
